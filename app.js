@@ -1,26 +1,8 @@
-/**
- * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// [START app]
 'use strict';
 
 const express = require('express');
 const app = express();
-
-app.get('/', (req, res) => {
-
+function getClientIP(req){
 	var ip = req.headers['push-real-ip'] ||
 		req.headers['x-forwarded-for'] ||
 		req.headers['x-real-ip'] ||
@@ -40,14 +22,31 @@ app.get('/', (req, res) => {
 	if (ip && ip.indexOf('::ffff:') == 0){
 		ip = ip.substring('::ffff:'.length)
 	}
-
-  res.status(200).json({
-        ip: ip,
+	return ip;
+}
+app.get('/', (req, res) => {
+  	res.status(200).json({
+        ip: getClientIP(req),
         headers: req.headers,
         session: req.session,
         query: req.query,
         body: req.body
     });
+});
+
+app.get('/s', (req, res) => {
+	var data = {
+        ip: getClientIP(req),
+        country : req.headers['x-appengine-country'] || '',
+        city : req.headers['x-appengine-city'] || '',
+        region : req.headers['x-appengine-region'] || '',
+        citylatlong : req.headers['x-appengine-citylatlong'] || ''
+    }
+    if ('?' == data.country || !data.country) delete data.country;
+    if ('?' == data.city || !data.city) delete data.city;
+    if ('?' == data.region || !data.region) delete data.region;
+    if ('?' == data.citylatlong || !data.citylatlong) delete data.citylatlong;
+  	res.status(200).json(data);
 });
 
 // Start the server
